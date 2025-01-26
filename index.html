@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitto Cabs</title>
+    <link rel="icon" href="data:,"> <!-- Added to fix favicon 404 error-->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> <!-- Added socket.io CDN here -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1>Twitto Cabs</h1>
+        <nav>
+            <span id="loggedInUser"></span>
+            <button id="loginBtn">Login</button>
+            <button id="signupBtn">Signup</button>
+            <button id="logoutBtn" style="display: none;">Logout</button>
+            <button id="postRideBtn" disabled>Post Ride</button>
+            <button id="publishRideBtn" disabled>Publish Ride</button>
+        </nav>
+    </div>
+</header>
+<main>
+    <section class="hero">
+        <div class="container">
+             <h2>Find Your Ride, Share Your Journey</h2>
+             <p>Connect with trusted riders and passengers in your city. Post a ride or find a ride today.</p>
+            <div class="hero-buttons">
+                <button id="heroSignupBtn">Start Saving and Connecting. Get Started with Twitto Cabs Now!</button>
+            </div>
+        </div>
+    </section>
+    <div class="container">
+        <section class="features">
+            <div class="feature-card">
+                <i class="fas fa-car icon"></i>
+                 <h3>Post a Ride</h3>
+                <p>Share your route with others, and offer a ride to the community.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-route icon"></i>
+                 <h3>Find a Ride</h3>
+                <p>Looking for a ride? Browse available rides and connect with drivers.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-user-friends icon"></i>
+                 <h3>Connect and Go</h3>
+                <p>Chat with other users and easily coordinate your ride with others.</p>
+            </div>
+        </section>
+         <div class="filter-section">
+            <label for="sortRides">Sort Rides:</label>
+             <select id="sortRides" title="Select how to sort the rides">
+                <option value="default">Default</option>
+                <option value="price_asc">Price Ascending</option>
+                <option value="price_desc">Price Descending</option>
+            </select>
+            <label for="filterType">Filter by Type:</label>
+            <select id="filterType" title="Select the type of ride to filter by">
+                <option value="all">All</option>
+                <option value="post">Post Ride</option>
+                <option value="publish">Publish Ride</option>
+            </select>
+              <label for="filterGender">Filter by Gender:</label>
+             <select id="filterGender" title="Select the gender of the ride to filter by">
+                    <option value="all">All</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+             </select>
+           <input type="text" id="searchLocation" placeholder="Search Location" title="Search for a ride by location">
+        </div>
+        <div id="ridesContainer">
+            <!-- Rides will be rendered here -->
+        </div>
+    </div>
+</main>
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Twitto Cabs</h3>
+                  <p>Twitto Cabs is more than just a ride-sharing service; it's a community. We offer a safe and convenient way for solo travelers to connect and share taxi rides, reducing costs and making travel more sustainable. Imagine arriving at your destination not just with a lighter wallet, but also with a new acquaintance.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Us</h3>
+                <p>Email: info@twittocabs.com</p>
+                <p>Phone: +91 999 999 9999</p>
+            </div>
+            <div class="footer-section social-links">
+                <h3>Follow Us</h3>
+               <a href="#" target="_blank" title="Follow us on facebook"><i class="fab fa-facebook icon"></i></a>
+               <a href="#" target="_blank" title="Follow us on twitter"><i class="fab fa-twitter icon"></i></a>
+               <a href="#" target="_blank" title="Follow us on instagram"><i class="fab fa-instagram icon"></i></a>
+               <a href="#" target="_blank" title="Follow us on linkedin"><i class="fab fa-linkedin icon"></i></a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 Twitto Cabs. All rights reserved.</p>
+            <p>Designed & Developed by Your Name</p>
+        </div>
+    </div>
+</footer>
+
+<a href="https://wa.me/919380002829" target="_blank" class="whatsapp-help-button" title="Chat with us on whatsapp">
+    <i class="fab fa-whatsapp"></i>
+</a>
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="loginEmail">Email:</label>
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <label for="loginPassword">Password:</label>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</div>
+<!-- Signup Modal -->
+<div id="signupModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h2>Signup</h2>
+         <form id="signupForm">
+            <label for="signupName">Name:</label>
+            <input type="text" id="signupName" placeholder="Name" required>
+            <label for="signupEmail">Email:</label>
+            <input type="email" id="signupEmail" placeholder="Email" required>
+           <label for="signupPassword">Password:</label>
+            <input type="password" id="signupPassword" placeholder="Password" required>
+            <label for="signupGender">Gender:</label>
+            <select id="signupGender" required title="Select your gender">
+                <option value="" disabled selected>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+            <button type="submit">Signup</button>
+        </form>
+    </div>
+</div>
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h2>Complete Payment</h2>
+        <p>Amount: <span id="paymentAmount"></span></p>
+        <button id="completePaymentBtn">Pay Now</button>
+    </div>
+</div>
+<!-- Post Ride Modal -->
+<div id="postRideModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h2>Post Ride</h2>
+        <form id="postRideForm">
+             <label for="postUserName">Name:</label>
+             <input type="text" id="postUserName" placeholder="Name" required>
+             <label for="postPickUp">Pick-up Location:</label>
+            <input type="text" id="postPickUp" placeholder="Pick-up Location" required>
+           <label for="postDropOff">Drop-off Location:</label>
+            <input type="text" id="postDropOff" placeholder="Drop-off Location" required>
+            <label for="postGender">Gender:</label>
+            <select id="postGender" required title="Select your gender">
+                <option value="" disabled selected>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+             <label for="postSeats">Number of Seats:</label>
+            <input type="number" id="postSeats" placeholder="Number of Seats" required>
+              <label for="postPersons">Number of Persons:</label>
+            <input type="number" id="postPersons" placeholder="Number of Persons" required>
+              <label for="postCarType">Car Type:</label>
+            <input type="text" id="postCarType" placeholder="Car Type" required>
+            <label for="postContact">Contact Number:</label>
+            <input type="tel" id="postContact" placeholder="Contact Number" required>
+              <label for="postBags">Number of Bags Allowed:</label>
+             <input type="number" id="postBags" placeholder="Number of Bags Allowed" required>
+            <button type="submit">Post Ride</button>
+        </form>
+    </div>
+</div>
+<!-- Publish Ride Modal -->
+<div id="publishRideModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">×</span>
+        <h2>Publish Ride</h2>
+         <form id="publishRideForm">
+             <label for="publishUserName">Name:</label>
+             <input type="text" id="publishUserName" placeholder="Name" required>
+              <label for="publishPickUp">Pick-up Location:</label>
+            <input type="text" id="publishPickUp" placeholder="Pick-up Location" required>
+             <label for="publishDropOff">Drop-off Location:</label>
+            <input type="text" id="publishDropOff" placeholder="Drop-off Location" required>
+              <label for="publishGender">Gender:</label>
+           <select id="publishGender" required title="Select your gender">
+                <option value="" disabled selected>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+              <label for="publishSeats">Number of Seats:</label>
+            <input type="number" id="publishSeats" placeholder="Number of Seats" required>
+            <label for="publishPersons">Number of Persons:</label>
+            <input type="number" id="publishPersons" placeholder="Number of Persons" required>
+              <label for="publishCarType">Car Type:</label>
+            <input type="text" id="publishCarType" placeholder="Car Type" required>
+             <label for="publishContact">Contact Number:</label>
+            <input type="tel" id="publishContact" placeholder="Contact Number" required>
+            <label for="publishPrice">Price:</label>
+            <input type="number" id="publishPrice" placeholder="Price" required>
+            <label for="publishBagsAllowed">Bags Allowed:</label>
+             <input type="number" id="publishBagsAllowed" placeholder="Bags Allowed" required>
+            <label for="publishPetsAllowed">Pets Allowed:</label>
+             <select id="publishPetsAllowed" required title="Select if pets are allowed or not">
+                <option value="" disabled selected>Pets Allowed?</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+            <button type="submit">Publish Ride</button>
+        </form>
+    </div>
+</div>
+<datalist id="indianLocationsList">
+    <!--Options generated by javascript-->
+</datalist>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
